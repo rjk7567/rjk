@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<style type="text/css">
+			*{margin: 0;padding: 0;list-style: none;}
+			body{
+				width: 60%;
+				margin: 20px auto;
+			}
+			input{
+				width: 100px;
+				height: 40px;
+			}
+			.xinyuan{
+				width: 1000px;
+				height: 600px;
+				border: 1px solid black;
+			}
+			ul{
+				display: flex;
+				flex-wrap: wrap;
+				width: 100%;
+				height: 100px;
+				justify-content: space-around;
+			}
+			li{
+				width: 20%;
+				height: 200px;
+				border: 1px solid black;
+				margin-top: 40px;
+				text-align: center;
+				position: relative;
+			}
+			.purple{
+				background: purple;
+			}
+			
+			span{
+				display: block;
+				width: 100%;
+				text-align: center;
+			}
+			.del{
+				height: 40px;
+				background: pink;
+				line-height: 40px;
+				cursor: pointer;
+			}
+			.content{
+				margin-top: 20px;
+				padding: 10px 0;
+				text-align: center;
+				background: aquamarine;
+			}
+			#shixian{
+				height: 50px;
+				line-height: 40px;
+				cursor: pointer;
+				position: absolute;
+				bottom: 0;
+			}
+		</style>
+	</head>
+	<body>
+		<input type="text" placeholder="你的心愿"/><br /><br />
+		<button id="add">许下心愿</button><br /><br />
+		<div class="xinyuan"><br /><br />
+			<h2 style="text-align: center;">心愿墙</h2>
+			<ul></ul>
+		</div>
+		
+	</body>
+	<script src="../js/jquery-3.3.1.js" type="text/javascript" charset="utf-8"></script>
+	<script src="../js/ajax_v3.js" type="text/javascript" charset="utf-8"></script>
+	<script type="text/javascript">
+		const Url = "http://localhost:8080"
+		$("#add").click(function () {
+			if ($("input").eq(0).val()=="") {
+				alert("请输入愿望")
+			}else{
+				ajax.post(Url+"/add",{hope:$("input").eq(0).val()}).then(res=>{
+					res = JSON.parse(res)
+					console.log(res)
+					if (res.status=="-1") {
+						alert(res.statusText)
+					}else{
+						showPage()
+					}
+				})
+				
+			}
+		})
+		function showPage () {
+			ajax.get(Url+"/msg").then(res=>{
+//				console.log(res)
+				res = JSON.parse(res)
+				if (res.status=="0") {
+					$("ul").html(res.statusText)
+				}else if(res.status=="8"){
+					let arr = res.newArr;
+					let str = ""
+					for (var i = 0; i < arr.length; i++) {
+						arr[i].timer = getDate(arr[i].timer);
+						str+=`
+						<li>
+						<span class="del" onclick=del("${arr[i]._id}")>删除</span>
+						<p class="content">
+							<span>${arr[i].hope}</span><br />
+							<span>${arr[i].timer}</span>
+						</p>
+						<span id="shixian" onclick=ch("${arr[i]._id}") class=${arr[i].statics}>√</span>
+					</li>
+						`
+					}
+					$("ul").html(str)
+				}else if(res.status=="5"){
+					let arr = res.data;
+					let str = ""
+					for (var i = 0; i < arr.length; i++) {
+						arr[i].timer = getDate(arr[i].timer);
+						str+=`
+						<li>
+						<span class="del" onclick=del("${arr[i]._id}")>删除</span>
+						<p class="content">
+							<span>${arr[i].hope}</span><br />
+							<span>${arr[i].timer}</span>
+						</p>
+						<span id="shixian" onclick=ch("${arr[i]._id}") class=${arr[i].statics}>√</span>
+					</li>
+						`
+					}
+					$("ul").html(str)
+				}
+			})
+			$("input").eq(0).val("")
+		}
+		showPage()
+		function del (id) {
+//			console.log(id)
+			ajax.get(Url+"/del",{_id:id}).then(res=>{
+				showPage()
+			})
+		}
+		function ch (id) {
+			console.log($(this))
+			
+			ajax.get(Url+"/ch",{_id:id,statics:"purple"}).then(res=>{
+				res= JSON.parse(res);
+				if (res.status=="2") {
+					showPage()
+					alert("恭喜你愿望已实现")
+				} else{
+					alert("无需重复实现")
+				}
+			})
+		}
+	</script>
+</html>
